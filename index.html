@@ -938,41 +938,16 @@
           body: JSON.stringify({ messages: conversationHistory }),
         });
 
-        if (!res.ok) throw new Error('API error');
+        if (!res.ok) throw new Error('API error ' + res.status);
+
+        const data = await res.json();
+        const text = data.text || "I'm here — could you say that again?";
 
         typingEl.remove();
         const bubble = createRenBubble();
-        let fullText = '';
-
-        const reader = res.body.getReader();
-        const decoder = new TextDecoder();
-        let buffer = '';
-
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split('\n');
-          buffer = lines.pop();
-          for (const line of lines) {
-            if (!line.startsWith('data: ')) continue;
-            const data = line.slice(6).trim();
-            if (data === '[DONE]') continue;
-            try {
-              const json = JSON.parse(data);
-              const delta = json.delta?.text || '';
-              if (delta) {
-                fullText += delta;
-                bubble.textContent = fullText;
-                scrollToBottom();
-              }
-            } catch {}
-          }
-        }
-
-        if (fullText) {
-          conversationHistory.push({ role: 'assistant', content: fullText });
-        }
+        bubble.textContent = text;
+        scrollToBottom();
+        conversationHistory.push({ role: 'assistant', content: text });
       } catch (err) {
         typingEl.remove();
         const bubble = createRenBubble();
