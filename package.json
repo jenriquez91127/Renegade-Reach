@@ -1,0 +1,12 @@
+{
+  "name": "renegade-reach",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "serve": "node serve.mjs",
+    "screenshot": "node screenshot.mjs http://localhost:3000"
+  },
+  "dependencies": {
+    "puppeteer": "^22.15.0"
+  }
+}
