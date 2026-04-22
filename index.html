@@ -842,14 +842,8 @@
   <script>
     'use strict';
 
-    const REN_WARMUP = [
-      "That sounds like a lot to sit with. How long has it been feeling this way?",
-      "I hear you. Is this something that came up suddenly, or has it been building for a while?",
-      "That makes sense. What does a normal day look like for you right now?",
-      "Thank you for sharing that. A lot of BC students carry more than people realize. What would feel like even a small relief right now?",
-      "I'm still here. Take as much time as you need.",
-    ];
-    let renTurn = 0;
+    const conversationHistory = [];
+    let isRenTyping = false;
 
     const preChatEl    = document.getElementById('pre-chat');
     const preChatForm  = document.getElementById('pre-chat-form');
@@ -861,14 +855,12 @@
     const chatSendBtn  = document.getElementById('chat-send');
 
     function openChat(firstMessage) {
-      // Fade out video/canvas — ambient gradient breathes up underneath
       const vid      = document.getElementById('bg-video');
       const sf       = document.getElementById('starfield');
       const overlay  = document.getElementById('bg-overlay');
       vid.style.opacity = '0';
       sf.style.opacity  = '0';
       overlay.classList.add('chat-active');
-      // After fully faded, pause video to free resources
       setTimeout(() => { if (!vid.paused) vid.pause(); }, 1600);
 
       preChatEl.classList.add('leaving');
@@ -877,9 +869,8 @@
         chatArea.classList.add('active');
         chatInput.focus();
         addStudentMsg(firstMessage);
-        showTyping().then(() => {
-          addRenMsg("Hey — I'm Ren. " + (REN_WARMUP[renTurn++] || "I'm here. Keep going."));
-        });
+        conversationHistory.push({ role: 'user', content: firstMessage });
+        askRen();
       }, 380);
     }
 
@@ -894,7 +885,7 @@
       scrollToBottom();
     }
 
-    function addRenMsg(text) {
+    function createRenBubble() {
       const msg = document.createElement('div');
       msg.className = 'msg ren';
       const sender = document.createElement('div');
@@ -902,50 +893,105 @@
       sender.textContent = 'Ren';
       const bubble = document.createElement('div');
       bubble.className = 'msg-bubble';
-      bubble.textContent = text;
       msg.appendChild(sender);
       msg.appendChild(bubble);
       msgInner.appendChild(msg);
       scrollToBottom();
+      return bubble;
     }
 
-    function showTyping() {
-      return new Promise(resolve => {
-        const msg = document.createElement('div');
-        msg.className = 'msg ren typing-indicator';
-        const sender = document.createElement('div');
-        sender.className = 'msg-sender';
-        sender.textContent = 'Ren';
-        const bubble = document.createElement('div');
-        bubble.className = 'msg-bubble';
-        for (let i = 0; i < 3; i++) {
-          const dot = document.createElement('div');
-          dot.className = 'typing-dot';
-          bubble.appendChild(dot);
-        }
-        msg.appendChild(sender);
-        msg.appendChild(bubble);
-        msgInner.appendChild(msg);
-        scrollToBottom();
-        const delay = 1200 + Math.random() * 600;
-        setTimeout(() => { msg.remove(); resolve(); }, delay);
-      });
+    function showTypingIndicator() {
+      const msg = document.createElement('div');
+      msg.className = 'msg ren typing-indicator';
+      const sender = document.createElement('div');
+      sender.className = 'msg-sender';
+      sender.textContent = 'Ren';
+      const bubble = document.createElement('div');
+      bubble.className = 'msg-bubble';
+      for (let i = 0; i < 3; i++) {
+        const dot = document.createElement('div');
+        dot.className = 'typing-dot';
+        bubble.appendChild(dot);
+      }
+      msg.appendChild(sender);
+      msg.appendChild(bubble);
+      msgInner.appendChild(msg);
+      scrollToBottom();
+      return msg;
     }
 
     function scrollToBottom() {
       msgsList.scrollTop = msgsList.scrollHeight;
     }
 
+    async function askRen() {
+      if (isRenTyping) return;
+      isRenTyping = true;
+      chatSendBtn.disabled = true;
+
+      const typingEl = showTypingIndicator();
+
+      try {
+        const res = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ messages: conversationHistory }),
+        });
+
+        if (!res.ok) throw new Error('API error');
+
+        typingEl.remove();
+        const bubble = createRenBubble();
+        let fullText = '';
+
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop();
+          for (const line of lines) {
+            if (!line.startsWith('data: ')) continue;
+            const data = line.slice(6).trim();
+            if (data === '[DONE]') continue;
+            try {
+              const json = JSON.parse(data);
+              const delta = json.delta?.text || '';
+              if (delta) {
+                fullText += delta;
+                bubble.textContent = fullText;
+                scrollToBottom();
+              }
+            } catch {}
+          }
+        }
+
+        if (fullText) {
+          conversationHistory.push({ role: 'assistant', content: fullText });
+        }
+      } catch (err) {
+        typingEl.remove();
+        const bubble = createRenBubble();
+        bubble.textContent = "I'm still here — something went wrong on my end. Try again?";
+      }
+
+      isRenTyping = false;
+      chatSendBtn.disabled = false;
+      chatInput.focus();
+    }
+
     function sendReply() {
+      if (isRenTyping) return;
       const text = chatInput.value.trim();
       if (!text) return;
       chatInput.value = '';
       addStudentMsg(text);
-      showTyping().then(() => {
-        const response = REN_WARMUP[renTurn] || "I'm still here with you. What else is on your mind?";
-        renTurn = Math.min(renTurn + 1, REN_WARMUP.length);
-        addRenMsg(response);
-      });
+      conversationHistory.push({ role: 'user', content: text });
+      askRen();
     }
 
     preChatForm.addEventListener('submit', e => {
