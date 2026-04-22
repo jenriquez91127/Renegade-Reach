@@ -1,3 +1,4 @@
 node_modules/
-Backgrounds/
+Backgrounds/*.mp4
+!Backgrounds/compressed/
 temporary screenshots/
