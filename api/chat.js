@@ -25,36 +25,33 @@ export default async function handler(req, res) {
     res.status(400).send('Invalid request'); return;
   }
 
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) { res.status(500).send('API key not configured'); return; }
 
-  const contents = messages.map(m => ({
-    role: m.role === 'assistant' ? 'model' : 'user',
-    parts: [{ text: m.content }],
-  }));
+  const anthropicRes = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 300,
+      system: SYSTEM_PROMPT,
+      messages,
+    }),
+  });
 
-  const geminiRes = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
-        contents,
-        generationConfig: { maxOutputTokens: 300, temperature: 0.85 },
-      }),
-    }
-  );
-
-  if (!geminiRes.ok) {
-    const err = await geminiRes.text();
-    console.error('Gemini error:', err);
-    res.status(geminiRes.status).send(err);
+  if (!anthropicRes.ok) {
+    const err = await anthropicRes.text();
+    console.error('Anthropic error:', err);
+    res.status(anthropicRes.status).send(err);
     return;
   }
 
-  const data = await geminiRes.json();
-  const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "I'm here — something went quiet on my end. Try again?";
+  const data = await anthropicRes.json();
+  const text = data.content?.[0]?.text || "I'm here — something went quiet on my end. Try again?";
 
   res.status(200).json({ text });
 }
