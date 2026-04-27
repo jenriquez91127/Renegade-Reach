@@ -146,6 +146,17 @@
       display: block;
     }
 
+    .rr-logo {
+      height: 32px;
+    }
+
+    .logo-divider {
+      width: 1px;
+      height: 24px;
+      background: rgba(0,0,0,0.15);
+      flex-shrink: 0;
+    }
+
     /* Text fallback if image 404s */
     .logo-fallback {
       display: none;
@@ -674,6 +685,12 @@
 
   <!-- Floating BC logo -->
   <a href="https://www.bakersfieldcollege.edu" class="floating-logo" aria-label="Bakersfield College home">
+    <img
+      src="brand_assets/bc-visual-identity/RenegadeReachlogo.png"
+      alt="Renegade Reach"
+      class="rr-logo"
+    >
+    <div class="logo-divider" aria-hidden="true"></div>
     <img
       src="https://www.bakersfieldcollege.edu/_resources/assets/img/BC-Signature-logo.png"
       alt="Bakersfield College"
