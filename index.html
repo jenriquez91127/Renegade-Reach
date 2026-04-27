@@ -97,11 +97,27 @@
       background: rgba(0, 0, 0, 0.38);
       z-index: 2;
       pointer-events: none;
-      transition: background 1.5s ease;
     }
 
-    #bg-overlay.chat-active {
-      background: rgba(0, 0, 0, 0.52);
+    /* =====================================================
+       FROST OVERLAY — fades in when chat starts.
+       Sits above the video, below the chat UI.
+       Video stays live and visible through the blur.
+    ===================================================== */
+    #frost-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 3;
+      pointer-events: none;
+      background: rgba(0, 0, 0, 0.45);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      opacity: 0;
+      transition: opacity 0.8s ease-in;
+    }
+
+    #frost-overlay.active {
+      opacity: 1;
     }
 
     /* =====================================================
@@ -603,6 +619,7 @@
   <video id="bg-video" autoplay loop muted playsinline aria-hidden="true"></video>
   <canvas id="starfield" aria-hidden="true"></canvas>
   <div id="bg-overlay" aria-hidden="true"></div>
+  <div id="frost-overlay" aria-hidden="true"></div>
 
   <!-- Privacy policy button -->
   <button class="privacy-btn" id="privacy-btn" aria-haspopup="dialog">Privacy Policy</button>
@@ -855,13 +872,7 @@
     const chatSendBtn  = document.getElementById('chat-send');
 
     function openChat(firstMessage) {
-      const vid      = document.getElementById('bg-video');
-      const sf       = document.getElementById('starfield');
-      const overlay  = document.getElementById('bg-overlay');
-      vid.style.opacity = '0';
-      sf.style.opacity  = '0';
-      overlay.classList.add('chat-active');
-      setTimeout(() => { if (!vid.paused) vid.pause(); }, 1600);
+      document.getElementById('frost-overlay').classList.add('active');
 
       preChatEl.classList.add('leaving');
       setTimeout(() => {
