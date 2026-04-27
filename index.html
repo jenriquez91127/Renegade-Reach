@@ -125,20 +125,25 @@
     ===================================================== */
     .floating-logo {
       position: fixed;
-      top: 24px;
-      left: 28px;
+      top: 18px;
+      left: 20px;
       z-index: 100;
       display: flex;
       align-items: center;
+      gap: 10px;
       text-decoration: none;
+      background: rgba(255,255,255,0.92);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      padding: 6px 14px 6px 10px;
+      border-radius: 8px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.3);
     }
 
     .floating-logo img {
-      height: 40px;
+      height: 36px;
       width: auto;
       display: block;
-      /* slight drop shadow so logo reads on any video frame */
-      filter: drop-shadow(0 1px 6px rgba(0,0,0,0.5));
     }
 
     /* Text fallback if image 404s */
