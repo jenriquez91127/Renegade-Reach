@@ -2,3 +2,4 @@ node_modules/
 Backgrounds/*.mp4
 !Backgrounds/compressed/
 temporary screenshots/
+.claude/settings.local.json
