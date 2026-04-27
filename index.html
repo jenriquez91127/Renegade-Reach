@@ -138,16 +138,24 @@
       padding: 6px 14px 6px 10px;
       border-radius: 8px;
       box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+      flex-shrink: 0;
     }
 
     .floating-logo img {
-      height: 36px;
-      width: auto;
       display: block;
+      flex-shrink: 0;
     }
 
     .rr-logo {
       height: 32px;
+      width: auto;
+    }
+
+    .bc-logo {
+      height: 36px;
+      width: 138px;        /* reserves space before network image arrives */
+      object-fit: contain;
+      object-position: left center;
     }
 
     .logo-divider {
@@ -694,6 +702,7 @@
     <img
       src="https://www.bakersfieldcollege.edu/_resources/assets/img/BC-Signature-logo.png"
       alt="Bakersfield College"
+      class="bc-logo"
       onerror="this.style.display='none';document.querySelector('.logo-fallback').style.display='flex';"
     >
     <div class="logo-fallback" aria-hidden="true">
